@@ -7,10 +7,13 @@ py-cord command objects.
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Iterable
 
 import discord
+
+log = logging.getLogger("dynamic_commands")
 
 
 class CommandsConfigError(Exception):
@@ -72,6 +75,7 @@ class ConfigCommands:
         for cmd in build_commands(commands):
             bot.add_application_command(cmd)
             self._registered.append(cmd)
+        log.debug("Registered %d config commands", self.count)
 
     def unregister(self, bot: discord.Bot) -> None:
         for cmd in self._registered:
@@ -81,7 +85,9 @@ class ConfigCommands:
     def reload(self, bot: discord.Bot, path: Path) -> int:
         # Validate and build the NEW commands before dropping the current ones,
         # so an invalid config leaves the working commands untouched.
+        old_count = self.count
         commands = load_config(path)
         self.unregister(bot)
         self.register(bot, commands)
+        log.debug("Reloaded config commands: %d -> %d", old_count, self.count)
         return self.count

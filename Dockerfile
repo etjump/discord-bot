@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+# Keep stdout/stderr unbuffered so docker logs sees output immediately.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 COPY requirements.txt .

@@ -21,6 +21,11 @@ Default commands:
 * `/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
 * `/setstatus` changes the bot's status message at runtime (`/setstatus text:Beep boop type:watching`, or `text:-` to clear).
 
+## Logging
+
+The bot logs to stderr, which `docker compose logs` captures - startup details, every slash-command invocation (who ran it and where), reloads and status changes, and errors.
+Set `LOG_LEVEL` in `.env` (`DEBUG`, `INFO`, `WARNING`, `ERROR`; default `INFO`) to control verbosity. Changes apply on restart.
+
 ## Bot status
 
 The status shown under the bot's name defaults to a custom status **"Beep
