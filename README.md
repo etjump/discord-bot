@@ -5,7 +5,7 @@ Discord bot for ETJump/Trickjump Discord.
 ## Commands
 
 Commands are defined in `config/commands.json` (falling back to the committed `commands.json`),
-so adding a simple command is just an edit + restart — no git commit or Docker rebuild required.
+so adding a simple command just requires editing the file on the server.
 
 Default commands:
 
@@ -16,7 +16,22 @@ Default commands:
 | `/help`  | `Help text placeholder.`  |
 | `/info`  | `Info placeholder.`       |
 
-`/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
+### Built-in commands
+
+* `/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
+* `/setstatus` changes the bot's status message at runtime (`/setstatus text:Beep boop type:watching`, or `text:-` to clear).
+
+## Bot status
+
+The status shown under the bot's name defaults to a custom status **"Beep
+boop"**. Configure it in `.env` (changes apply on restart):
+
+```
+BOT_ACTIVITY=Beep boop            # status text; empty = no status
+BOT_ACTIVITY_TYPE=custom          # custom | watching | playing | listening | competing | streaming
+```
+
+`/setstatus` overrides it at runtime (until the next restart).
 
 ## Adding a simple command
 

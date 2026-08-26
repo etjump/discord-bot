@@ -1,11 +1,13 @@
 import discord
 
 import dynamic_commands
-from config import TOKEN, resolve_commands_file
+from config import TOKEN, build_activity, resolve_commands_file
 
 
 def main() -> None:
-    bot = discord.Bot()
+    # Setting the activity explicitly at startup means the bot always shows its
+    # own status — it doesn't inherit whatever another bot last set.
+    bot = discord.Bot(activity=build_activity())
     config_commands = dynamic_commands.ConfigCommands()
 
     # Register BEFORE bot.run(): py-cord only uploads command definitions to
@@ -39,6 +41,36 @@ def main() -> None:
             await ctx.respond(f"Reload failed: {e}")
             return
         await ctx.respond(f"Reloaded {count} commands from {commands_file.name}.")
+
+    @bot.slash_command(name="setstatus", description="Set the bot's status message.")
+    async def setstatus(
+        ctx: discord.ApplicationContext,
+        status_type: discord.Option(
+            str,
+            "Status type.",
+            choices=[
+                discord.OptionChoice("Custom", "custom"),
+                discord.OptionChoice("Watching", "watching"),
+                discord.OptionChoice("Playing", "playing"),
+                discord.OptionChoice("Listening", "listening"),
+                discord.OptionChoice("Competing", "competing"),
+                discord.OptionChoice("Streaming", "streaming"),
+            ],
+        ) = "custom",
+        text: discord.Option(str, "Status text. Use '-' to clear the status.") = "Beep boop",
+    ) -> None:
+        if text.strip() in ("", "-"):
+            # clearing means "no activity", not a status with empty text
+            await bot.change_presence(activity=None)
+            await ctx.respond("Status cleared.")
+            return
+        try:
+            activity = build_activity(text=text.strip(), activity_type=status_type)
+        except ValueError as e:
+            await ctx.respond(f"Failed: {e}")
+            return
+        await bot.change_presence(activity=activity)
+        await ctx.respond(f"Status set: {status_type}: {text.strip()}")
 
     bot.run(TOKEN)
 
