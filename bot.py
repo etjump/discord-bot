@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Annotated
 
 import discord
 
@@ -49,6 +50,9 @@ def main() -> None:
 
     @bot.event
     async def on_ready() -> None:
+        # bot.user is guaranteed to be set once connected; the assert tells
+        # pyright it's not None so it can type-check bot.user.id.
+        assert bot.user is not None
         log.info("Logged in as %s (ID %d)", bot.user, bot.user.id)
 
     @bot.event
@@ -97,19 +101,24 @@ def main() -> None:
     @bot.slash_command(name="setstatus", description="Set the bot's status message.")
     async def setstatus(
         ctx: discord.ApplicationContext,
-        status_type: discord.Option(
+        status_type: Annotated[
             str,
-            "Status type.",
-            choices=[
-                discord.OptionChoice("Custom", "custom"),
-                discord.OptionChoice("Watching", "watching"),
-                discord.OptionChoice("Playing", "playing"),
-                discord.OptionChoice("Listening", "listening"),
-                discord.OptionChoice("Competing", "competing"),
-                discord.OptionChoice("Streaming", "streaming"),
-            ],
-        ) = "custom",
-        text: discord.Option(str, "Status text. Use '-' to clear the status.") = "Beep boop",
+            discord.Option(
+                str,
+                "Status type.",
+                choices=[
+                    discord.OptionChoice("Custom", "custom"),
+                    discord.OptionChoice("Watching", "watching"),
+                    discord.OptionChoice("Playing", "playing"),
+                    discord.OptionChoice("Listening", "listening"),
+                    discord.OptionChoice("Competing", "competing"),
+                    discord.OptionChoice("Streaming", "streaming"),
+                ],
+            ),
+        ] = "custom",
+        text: Annotated[
+            str, discord.Option(str, "Status text. Use '-' to clear the status.")
+        ] = "Beep boop",
     ) -> None:
         if text.strip() in ("", "-"):
             # clearing means "no activity", not a status with empty text
