@@ -80,6 +80,19 @@ mkdir -p config && cp commands.json config/commands.json
 python bot.py
 ```
 
+## Development tools
+
+Formatting and linting use [Ruff](https://docs.astral.sh/ruff/) (configured in
+`pyproject.toml`); type-checking uses pyright (configured in
+`pyrightconfig.json`).
+
+```
+pip install -r requirements.txt ruff
+ruff format .          # format code
+ruff check .           # lint
+pyright .              # type check
+```
+
 ## Deploy
 
 Requires git and Docker 24+ (with the compose plugin). `deploy.sh` installs Docker if missing,

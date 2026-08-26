@@ -42,7 +42,11 @@ def main() -> None:
     commands_file = resolve_commands_file()
     try:
         config_commands.register(bot, dynamic_commands.load_config(commands_file))
-        log.info("Registered %d config commands from %s", config_commands.count, commands_file)
+        log.info(
+            "Registered %d config commands from %s",
+            config_commands.count,
+            commands_file,
+        )
     except dynamic_commands.CommandsConfigError as e:
         # A broken commands file shouldn't take the bot down — better to come
         # online without the config commands than not at all.
@@ -80,7 +84,9 @@ def main() -> None:
         except discord.DiscordException:
             pass
 
-    @bot.slash_command(name="reload", description="Reload commands from the commands.json config file.")
+    @bot.slash_command(
+        name="reload", description="Reload commands from the commands.json config file."
+    )
     async def reload(ctx: discord.ApplicationContext) -> None:
         try:
             # Resolve at call time, not at startup: the file may have been

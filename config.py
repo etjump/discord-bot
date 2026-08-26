@@ -28,7 +28,9 @@ _ACTIVITY_TYPES = {
 }
 
 
-def build_activity(text: str | None = None, activity_type: str | None = None) -> discord.BaseActivity | None:
+def build_activity(
+    text: str | None = None, activity_type: str | None = None
+) -> discord.BaseActivity | None:
     # Used at startup (no args, reads env config) and by /setstatus (explicit
     # args). Returns None when there is no text, meaning "no status". Custom
     # statuses use a different class than the standard "Playing/Watching/..."
@@ -42,10 +44,12 @@ def build_activity(text: str | None = None, activity_type: str | None = None) ->
     try:
         activity = _ACTIVITY_TYPES[activity_type]
     except KeyError:
+        # from None: the KeyError context isn't useful — the ValueError
+        # message already explains the invalid type to the user.
         raise ValueError(
             f"unknown status type '{activity_type}' "
             f"(valid: custom, {', '.join(_ACTIVITY_TYPES)})"
-        )
+        ) from None
     return discord.Activity(type=activity, name=text)
 
 

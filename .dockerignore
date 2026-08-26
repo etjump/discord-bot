@@ -12,3 +12,5 @@ __pycache__
 venv
 config
 pyrightconfig.json
+pyproject.toml
+.ruff_cache

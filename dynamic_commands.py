@@ -8,8 +8,8 @@ py-cord command objects.
 
 import json
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import discord
 
@@ -30,12 +30,20 @@ def load_config(path: Path) -> list[dict]:
         raise CommandsConfigError(f"invalid JSON in {path}: {e}") from e
 
     if not isinstance(data, dict) or not isinstance(data.get("commands"), list):
-        raise CommandsConfigError(f'{path} must be an object containing a "commands" list')
+        raise CommandsConfigError(
+            f'{path} must be an object containing a "commands" list'
+        )
 
     commands = data["commands"]
     for i, entry in enumerate(commands):
-        if not isinstance(entry, dict) or not entry.get("name") or not entry.get("response"):
-            raise CommandsConfigError(f'command #{i} in {path} needs "name" and "response"')
+        if (
+            not isinstance(entry, dict)
+            or not entry.get("name")
+            or not entry.get("response")
+        ):
+            raise CommandsConfigError(
+                f'command #{i} in {path} needs "name" and "response"'
+            )
 
     return commands
 
