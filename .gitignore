@@ -157,6 +157,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local bot configuration (config/commands.json lives only on the server)
+config/
+
 # Spyder project settings
 .spyderproject
 .spyproject

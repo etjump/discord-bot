@@ -1,0 +1,10 @@
+services:
+  bot:
+    build:
+      context: ${BOT_SRC:-/opt/etjump-discord-bot}
+    container_name: etjump-discord-bot
+    restart: unless-stopped
+    env_file:
+      - ${BOT_ETC:-/etc/etjump-discord-bot}/.env
+    volumes:
+      - ${BOT_DATA:-/var/lib/etjump-discord-bot}/config:/app/config
