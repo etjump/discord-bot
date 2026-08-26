@@ -6,11 +6,6 @@
       "response": "Hello!"
     },
     {
-      "name": "ping",
-      "description": "Check that the bot is responding.",
-      "response": "Pong!"
-    },
-    {
       "name": "help",
       "description": "Show available commands.",
       "response": "Help text placeholder."

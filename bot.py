@@ -84,6 +84,12 @@ def main() -> None:
         except discord.DiscordException:
             pass
 
+    @bot.slash_command(name="ping", description="Check that the bot is responding.")
+    async def ping(ctx: discord.ApplicationContext) -> None:
+        await ctx.respond(
+            f"Pong! Latency: {round(bot.latency * 1000)}ms", ephemeral=True
+        )
+
     @bot.slash_command(
         name="reload", description="Reload commands from the commands.json config file."
     )

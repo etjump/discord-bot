@@ -12,12 +12,12 @@ Default commands:
 | Command  | Reply                     |
 | -------- | ------------------------- |
 | `/hello` | `Hello!`                  |
-| `/ping`  | `Pong!`                   |
 | `/help`  | `Help text placeholder.`  |
 | `/info`  | `Info placeholder.`       |
 
 ### Built-in commands
 
+* `/ping` checks if the bot is responding. If alive, responds and prints the latency.
 * `/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
 * `/setstatus` changes the bot's status message at runtime (`/setstatus text:Beep boop type:watching`, or `text:-` to clear).
 
