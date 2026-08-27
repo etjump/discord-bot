@@ -69,16 +69,35 @@ When deployed, the file layout is as follows:
 
 The docker-compose paths default to this - you may override them via `BOT_SRC` / `BOT_ETC` / `BOT_DATA` (used automatically by `deploy.sh`).
 
-## Run locally
+## Run locally (development)
 
-```
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env          # set TOKEN
-mkdir -p config && cp commands.json config/commands.json
-python bot.py
-```
+Use a **separate test bot** — don't run a dev copy against the prod token. Two instances sharing
+one Discord application fight over the status message and command definitions, and prod commands
+would appear on the dev bot.
+
+1. Create a new application in the Discord Developer Portal (New Application → Bot) and copy its token.
+2. In the OAuth2 URL Generator, tick the `bot` and `applications.commands` scopes and invite it to a test server.
+3. Set up the environment:
+
+   ```
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env          # set TOKEN to the test bot's token
+   mkdir -p config && cp commands.json config/commands.json
+   ```
+
+   `config/commands.json` (gitignored) is the live config the bot reads at startup and via `/reload`;
+   `commands.json` is the committed fallback/template. Edit the `config/` copy for local experiments,
+   never the committed file.
+4. Run it — no Docker needed:
+
+   ```
+   python bot.py
+   ```
+
+   Set `LOG_LEVEL=DEBUG` in `.env` for verbose startup logs. `/reload` works against your local
+   `config/commands.json`, so config changes don't require a restart.
 
 ## Development tools
 
