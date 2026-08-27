@@ -141,11 +141,12 @@ The container has `restart: unless-stopped`, so it comes back up on server reboo
 
 ## Structure
 
-- `bot.py` — entrypoint; registers config commands, defines `/reload`
+- `bot.py` — entrypoint; sets up logging, registers config commands, loads the cog, runs the bot
+- `cogs/basic.py` — built-in commands (`/ping`, `/reload`, `/setstatus`) and event listeners
 - `config.py` — reads environment variables; resolves the commands file path
 - `dynamic_commands.py` — loads the commands config and registers/reloads commands
 - `commands.json` — committed default command definitions (template)
 - `docker-compose.yml` — service definition with the standard layout paths
 
-Future features that need logic should be added as modules loaded from `bot.py`
-(py-cord cogs when you have many commands); settings go in `config.py` and `.env`.
+Commands that need logic live in a cog under `cogs/` (like `cogs/basic.py`);
+simple static commands go in the command config. Settings live in `config.py` and `.env`.
