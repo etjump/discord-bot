@@ -80,7 +80,9 @@ def main() -> None:
         cmd = ctx.command.qualified_name if ctx.command else "?"
         log.error("Command /%s errored: %s", cmd, error, exc_info=error)
         try:
-            await ctx.respond("Something went wrong while running that command.")
+            await ctx.respond(
+                "Something went wrong while running that command.", ephemeral=True
+            )
         except discord.DiscordException:
             pass
 
@@ -105,10 +107,12 @@ def main() -> None:
             await bot.sync_commands()
         except dynamic_commands.CommandsConfigError as e:
             log.warning("Reload failed: %s", e)
-            await ctx.respond(f"Reload failed: {e}")
+            await ctx.respond(f"Reload failed: {e}", ephemeral=True)
             return
         log.info("Reloaded %d commands from %s", count, commands_file)
-        await ctx.respond(f"Reloaded {count} commands from {commands_file.name}.")
+        await ctx.respond(
+            f"Reloaded {count} commands from {commands_file.name}.", ephemeral=True
+        )
 
     @bot.slash_command(name="setstatus", description="Set the bot's status message.")
     async def setstatus(
@@ -136,17 +140,17 @@ def main() -> None:
             # clearing means "no activity", not a status with empty text
             await bot.change_presence(activity=None)
             log.info("Status cleared by %s", ctx.author)
-            await ctx.respond("Status cleared.")
+            await ctx.respond("Status cleared.", ephemeral=True)
             return
         try:
             activity = build_activity(text=text.strip(), activity_type=status_type)
         except ValueError as e:
             log.warning("Failed to set status: %s", e)
-            await ctx.respond(f"Failed: {e}")
+            await ctx.respond(f"Failed: {e}", ephemeral=True)
             return
         await bot.change_presence(activity=activity)
         log.info("Status set to %s '%s' by %s", status_type, text.strip(), ctx.author)
-        await ctx.respond(f"Status set: {status_type}: {text.strip()}")
+        await ctx.respond(f"Status set: {status_type}: {text.strip()}", ephemeral=True)
 
     log.info("Starting bot...")
     bot.run(TOKEN)
