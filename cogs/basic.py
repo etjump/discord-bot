@@ -85,6 +85,7 @@ class Basic(discord.Cog):
     @discord.slash_command(
         name="reload",
         description="Reload commands from the `commands.json` config file.",
+        contexts={discord.InteractionContextType.guild},
         default_member_permissions=discord.Permissions(administrator=True),
     )
     async def reload(self, ctx: discord.ApplicationContext) -> None:
@@ -109,6 +110,7 @@ class Basic(discord.Cog):
     @discord.slash_command(
         name="setstatus",
         description="Set the bot's status message.",
+        contexts={discord.InteractionContextType.guild},
         default_member_permissions=discord.Permissions(administrator=True),
     )
     async def setstatus(
