@@ -10,18 +10,82 @@ log = logging.getLogger(__name__)
 
 
 class Basic(discord.Cog):
-    def __init__(self, bot, config_commands) -> None:
+    def __init__(
+        self, bot: discord.Bot, config_commands: dynamic_commands.ConfigCommands
+    ) -> None:
         self.bot = bot
         self._config_commands = config_commands
 
+    @discord.slash_command(name="help", description="Display available commands.")
+    async def help(self, ctx: discord.ApplicationContext) -> None:
+        # If invoked via DM, 'guild_permissions' don't exists
+        perms = (
+            ctx.author.guild_permissions
+            if isinstance(ctx.author, discord.Member)
+            else None
+        )
+
+        admin_cmds = []
+        general_cmds = []
+
+        for cmd in self.bot.application_commands:
+            if not isinstance(cmd, discord.SlashCommand):
+                continue
+
+            required = cmd.default_member_permissions
+
+            if required is None:
+                general_cmds.append(cmd)
+            elif perms is not None and (
+                perms.administrator or perms.is_superset(required)
+            ):
+                admin_cmds.append(cmd)
+
+        embed = discord.Embed(
+            title="Commands",
+            description="List of commands available for you to use.",
+            color=discord.Colour.from_rgb(134, 168, 134),
+        )
+
+        assert self.bot.user is not None
+        embed.set_author(name="TJBot", icon_url=self.bot.user.display_avatar.url)
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        embed.set_footer(
+            text="Commands you may have access to via overrides are not listed here."
+        )
+
+        general_fmt = "\n".join(
+            [f"**/{cmd.name}** - {cmd.description}" for cmd in general_cmds]
+        )
+        embed.add_field(
+            name="General commands",
+            value=general_fmt,
+            inline=False,
+        )
+
+        if admin_cmds:
+            admin_fmt = "\n".join(
+                [f"**/{cmd.name}** - {cmd.description}" for cmd in admin_cmds]
+            )
+            embed.add_field(
+                name="Admin commands",
+                value=admin_fmt,
+                inline=False,
+            )
+
+        await ctx.respond(embed=embed, ephemeral=True)
+
     @discord.slash_command(name="ping", description="Check that the bot is responding.")
     async def ping(self, ctx: discord.ApplicationContext) -> None:
+
         await ctx.respond(
             f"Pong! Latency: {round(self.bot.latency * 1000)}ms", ephemeral=True
         )
 
     @discord.slash_command(
-        name="reload", description="Reload commands from the commands.json config file."
+        name="reload",
+        description="Reload commands from the `commands.json` config file.",
+        default_member_permissions=discord.Permissions(administrator=True),
     )
     async def reload(self, ctx: discord.ApplicationContext) -> None:
         try:
@@ -43,7 +107,9 @@ class Basic(discord.Cog):
         )
 
     @discord.slash_command(
-        name="setstatus", description="Set the bot's status message."
+        name="setstatus",
+        description="Set the bot's status message.",
+        default_member_permissions=discord.Permissions(administrator=True),
     )
     async def setstatus(
         self,
