@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, cast
 
 import discord
 
@@ -25,10 +25,11 @@ class Basic(discord.Cog):
             else None
         )
 
-        admin_cmds = []
-        general_cmds = []
+        admin_cmds: list[discord.SlashCommand] = []
+        general_cmds: list[discord.SlashCommand] = []
+        commands = cast(list[discord.SlashCommand], self.bot.application_commands)
 
-        for cmd in self.bot.application_commands:
+        for cmd in commands:
             if not isinstance(cmd, discord.SlashCommand):
                 continue
 
