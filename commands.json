@@ -6,11 +6,6 @@
       "response": "Hello!"
     },
     {
-      "name": "help",
-      "description": "Show available commands.",
-      "response": "Help text placeholder."
-    },
-    {
       "name": "info",
       "description": "Show information about the bot.",
       "response": "Info placeholder."

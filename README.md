@@ -4,22 +4,30 @@ Discord bot for ETJump/Trickjump Discord.
 
 ## Commands
 
-Commands are defined in `config/commands.json` (falling back to the committed `commands.json`),
-so adding a simple command just requires editing the file on the server.
+The bot has several built-in commands, some of which are available only to users with administrator privileges by default.
+
+### General commands
+
+* `/help` lists the commands available. This is permission-aware, only commands you have access to will be displayed.
+  * Note: any guild-specific command overrides are ignored in the output.
+* `/ping` checks if the bot is responding. If alive, responds and prints the latency.
+
+### Admin commands
+
+* `/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
+* `/setstatus [type] [text]` changes the bot's status message at runtime. Setting `text` to `-` clears the bot's status.
+
+### Simple custom commands
+
+You may define your own custom commands in `config/commands.json` (falling back to the committed `commands.json`).
+These commands are just simple text replies, and don't contain any logic. See [Adding a simple command](#adding-a-simple-command) for instructions.
 
 Default commands:
 
 | Command  | Reply                     |
 | -------- | ------------------------- |
 | `/hello` | `Hello!`                  |
-| `/help`  | `Help text placeholder.`  |
 | `/info`  | `Info placeholder.`       |
-
-### Built-in commands
-
-* `/ping` checks if the bot is responding. If alive, responds and prints the latency.
-* `/reload` re-reads the commands config and re-syncs commands with Discord without restarting.
-* `/setstatus` changes the bot's status message at runtime (`/setstatus text:Beep boop type:watching`, or `text:-` to clear).
 
 ## Logging
 
@@ -52,10 +60,7 @@ BOT_ACTIVITY_TYPE=custom          # custom | watching | playing | listening | co
    ```
    docker compose restart
    ```
-   (Or use `/reload` in Discord — no restart needed.)
-
-Config commands are limited to a static `response`.
-Anything needing logic — arguments, embeds, dynamic content etc — goes in code (see Structure below).
+   You can also simply execute `/reload` to load the commands again, without restarting.
 
 ## Layout
 
