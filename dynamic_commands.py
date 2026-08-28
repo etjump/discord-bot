@@ -8,19 +8,26 @@ py-cord command objects.
 
 import json
 import logging
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
+from typing import NotRequired, TypedDict, cast
 
 import discord
 
 log = logging.getLogger("dynamic_commands")
 
 
+class ConfigCommand(TypedDict):
+    name: str
+    description: NotRequired[str]
+    response: str
+
+
 class CommandsConfigError(Exception):
     pass
 
 
-def load_config(path: Path) -> list[dict]:
+def load_config(path: Path) -> list[ConfigCommand]:
     try:
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -34,7 +41,7 @@ def load_config(path: Path) -> list[dict]:
             f'{path} must be an object containing a "commands" list'
         )
 
-    commands = data["commands"]
+    commands = cast(list[ConfigCommand], data["commands"])
     for i, entry in enumerate(commands):
         if (
             not isinstance(entry, dict)
@@ -48,7 +55,9 @@ def load_config(path: Path) -> list[dict]:
     return commands
 
 
-def make_responder(response: str):
+def make_responder(
+    response: str,
+) -> Callable[[discord.ApplicationContext], Awaitable[None]]:
     # Each command gets its own closure capturing its response text. The
     # response can't be a plain function parameter: py-cord treats every
     # parameter of a command callback as a user-supplied option.
@@ -58,8 +67,8 @@ def make_responder(response: str):
     return responder
 
 
-def build_commands(commands: Iterable[dict]) -> list[discord.SlashCommand]:
-    result = []
+def build_commands(commands: Iterable[ConfigCommand]) -> list[discord.SlashCommand]:
+    result: list[discord.SlashCommand] = []
     for entry in commands:
         result.append(
             discord.SlashCommand(
@@ -68,6 +77,7 @@ def build_commands(commands: Iterable[dict]) -> list[discord.SlashCommand]:
                 description=entry.get("description") or "No description provided.",
             )
         )
+
     return result
 
 
@@ -79,7 +89,7 @@ class ConfigCommands:
     def count(self) -> int:
         return len(self._registered)
 
-    def register(self, bot: discord.Bot, commands: Iterable[dict]) -> None:
+    def register(self, bot: discord.Bot, commands: Iterable[ConfigCommand]) -> None:
         for cmd in build_commands(commands):
             bot.add_application_command(cmd)
             self._registered.append(cmd)
