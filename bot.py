@@ -5,6 +5,7 @@ import discord
 
 import dynamic_commands
 from cogs.basic import Basic
+from cogs.server_monitor import ServerMonitor
 from config import TOKEN, build_activity, resolve_commands_file
 
 log = logging.getLogger("bot")
@@ -33,7 +34,7 @@ def main() -> None:
 
     # Setting the activity explicitly at startup means the bot always shows its
     # own status — it doesn't inherit whatever another bot last set.
-    bot = discord.Bot(activity=build_activity())
+    bot = discord.Bot(activity=build_activity(), cache_app_emojis=True)
     config_commands = dynamic_commands.ConfigCommands()
 
     # Register BEFORE bot.run(): py-cord only uploads command definitions to
@@ -55,8 +56,12 @@ def main() -> None:
     log.info("Starting bot...")
 
     log.info("Adding cogs...")
+
     bot.add_cog(Basic(bot, config_commands))
     log.info("Registered cog 'Basic'")
+
+    bot.add_cog(ServerMonitor(bot))
+    log.info("Registered cog 'Server Monitor'")
 
     bot.run(TOKEN)
 
