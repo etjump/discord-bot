@@ -26,6 +26,18 @@ def _strip_color_codes(text: str) -> str:
     return re.sub(_COLOR_STRING, "", text)
 
 
+def _build_location_field(country: str | None) -> str:
+    """'country' should be ISO 3166-1 alpha-2 country code"""
+    if not country or len(country) != 2:
+        return _UNKNOWN_LOCATION
+
+    country_data = pycountry.countries.get(alpha_2=country)
+    if not country_data:
+        return _UNKNOWN_LOCATION
+
+    return f"{country_data.flag} {country_data.name}"
+
+
 class ServerMonitor(discord.Cog):
     def __init__(self, bot: discord.Bot) -> None:
         self.bot = bot
@@ -52,17 +64,6 @@ class ServerMonitor(discord.Cog):
             self._emoji_cache[name] = discord.utils.get(self.bot.emojis, name=name)
         return self._emoji_cache[name]
 
-    def _build_location_field(self, country: str | None) -> str:
-        """'country' should be ISO 3166-1 alpha-2 country code"""
-        if not country or len(country) != 2:
-            return _UNKNOWN_LOCATION
-
-        country_data = pycountry.countries.get(alpha_2=country)
-        if not country_data:
-            return _UNKNOWN_LOCATION
-
-        return f"{country_data.flag} {country_data.name}"
-
     def _build_timestamp(self) -> str:
         now = datetime.datetime.now().astimezone()
         offset = now.strftime("%z")  # "+0200"
@@ -85,7 +86,7 @@ class ServerMonitor(discord.Cog):
 
         embed.add_field(name="Address", value=f"`{status.host}:{status.port}`")
         embed.add_field(
-            name="Location", value=f"{self._build_location_field(status.location)}"
+            name="Location", value=f"{_build_location_field(status.location)}"
         )
         # TODO: actually check the status - this is relevant only for the monitoring loop
         embed.add_field(name="Status", value=":green_circle: Online")

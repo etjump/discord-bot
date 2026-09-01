@@ -14,3 +14,6 @@ config
 pyrightconfig.json
 pyproject.toml
 .ruff_cache
+tests
+.github
+requirements-dev.txt
