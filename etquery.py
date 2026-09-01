@@ -13,6 +13,7 @@ class Status:
     port: int
     info: dict[str, str]
     players: list[tuple[int, int, str]]
+    location: str | None = None
 
 
 class QueryError(Exception):

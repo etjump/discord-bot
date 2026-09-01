@@ -6,8 +6,10 @@ import time
 from typing import Annotated
 
 import discord
+import pycountry
 
 import etquery
+import geoip
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +18,8 @@ _COLOR_STRING = re.compile(r"\^[^^]")
 
 _TEAM_AXIS = "1"
 _TEAM_ALLIES = "2"
+
+_UNKNOWN_LOCATION = ":united_nations: Unknown"
 
 
 def _strip_color_codes(text: str) -> str:
@@ -48,6 +52,17 @@ class ServerMonitor(discord.Cog):
             self._emoji_cache[name] = discord.utils.get(self.bot.emojis, name=name)
         return self._emoji_cache[name]
 
+    def _build_location_field(self, country: str | None) -> str:
+        """'country' should be ISO 3166-1 alpha-2 country code"""
+        if not country or len(country) != 2:
+            return _UNKNOWN_LOCATION
+
+        country_data = pycountry.countries.get(alpha_2=country)
+        if not country_data:
+            return _UNKNOWN_LOCATION
+
+        return f"{country_data.flag} {country_data.name}"
+
     def _build_timestamp(self) -> str:
         now = datetime.datetime.now().astimezone()
         offset = now.strftime("%z")  # "+0200"
@@ -69,9 +84,9 @@ class ServerMonitor(discord.Cog):
         )
 
         embed.add_field(name="Address", value=f"`{status.host}:{status.port}`")
-        # TODO: fetch IP geolocation when server gets added
-        # embed.add_field(name="Country", value=":united_nations: Unknown")
-        embed.add_field(name="", value="")
+        embed.add_field(
+            name="Location", value=f"{self._build_location_field(status.location)}"
+        )
         # TODO: actually check the status - this is relevant only for the monitoring loop
         embed.add_field(name="Status", value=":green_circle: Online")
 
@@ -175,6 +190,8 @@ class ServerMonitor(discord.Cog):
         except etquery.QueryError as e:
             await ctx.respond(f"Query failed: {e}", ephemeral=True)
             return
+
+        status.location = await asyncio.to_thread(geoip.country_lookup, host)
 
         # we don't use Discord's built-in timestamp, or embed.timestamp here because:
         # * Discord built-in timestamp cannot be used in footers, and adding it
