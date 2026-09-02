@@ -1,6 +1,7 @@
 import socket
 import sys
 from dataclasses import dataclass
+from typing import Self
 
 DEFAULT_PORT = 27960
 GETSTATUS_QUERY = b"\xff\xff\xff\xffgetstatus\n"
@@ -14,6 +15,11 @@ class Status:
     info: dict[str, str]
     players: list[tuple[int, int, str]]
     location: str | None = None
+    is_online: bool = True
+
+    @classmethod
+    def offline(cls, host: str, port: int) -> Self:
+        return cls(host, port, {}, [], location=None, is_online=False)
 
 
 class QueryError(Exception):
@@ -32,14 +38,17 @@ def main(argv: list[str] | None = None) -> None:
         host, port = parse_address(argv[0])
         print(f"Server: {host}")
         print(f"Port: {port}")
-
-        payload = query_status(host, port)
-        status = parse_status(payload, host, port)
     except ValueError as e:
         print(f"Invalid address: {e}")
         sys.exit(1)
+
+    try:
+        payload = query_status(host, port)
+        status = parse_status(payload, host, port)
     except QueryError as e:
         print(f"Query failed: {e}")
+        status = Status.offline(host, port)
+        print(status)
         sys.exit(1)
 
     print(status)

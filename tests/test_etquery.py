@@ -67,8 +67,20 @@ def test_parse_status_real_payload() -> None:
     assert status.players[0] == (0, 44, "A-BloCk")
     assert status.players[-1] == (0, 170, "^7[^l100^7]^lL^7ag^lS^7pike")
     assert status.location is None
+    assert status.is_online is True
 
 
 def test_parse_status_malformed_payload_raises() -> None:
     with pytest.raises(etquery.QueryError):
         etquery.parse_status(b"\xff\xff\xff\xffprint\nNo challenge", "host", 27960)
+
+
+def test_status_offline_builds_stub() -> None:
+    status = etquery.Status.offline("et.etjump.com", 27960)
+
+    assert status.host == "et.etjump.com"
+    assert status.port == 27960
+    assert status.info == {}
+    assert status.players == []
+    assert status.location is None
+    assert status.is_online is False
