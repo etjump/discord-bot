@@ -1,18 +1,25 @@
 import asyncio
 import datetime
 import logging
+import os
 import re
 import time
 from typing import Annotated
 
 import discord
 import pycountry
+from discord.ext import tasks
 
 import etquery
 import geoip
+import monitor_config
 
 log = logging.getLogger(__name__)
 
+_POLL_INTERVAL_MIN = 15
+_POLL_INTERVAL = max(
+    int(os.environ.get("POLL_INTERVAL_SECONDS", 60)), _POLL_INTERVAL_MIN
+)
 _RATE_LIMIT_SECONDS = 5
 _COLOR_STRING = re.compile(r"\^[^^]")
 
@@ -43,6 +50,41 @@ class ServerMonitor(discord.Cog):
         self.bot = bot
         self._last_query: dict[int, float] = {}
         self._emoji_cache: dict[str, discord.GuildEmoji | discord.AppEmoji | None] = {}
+        self._monitored_servers: list[monitor_config.MonitoredServer] = []
+
+    @discord.Cog.listener()
+    async def on_ready(self) -> None:
+        # guard against starting the loop twice, if the bot reconnects
+        if self._monitor_loop.is_running():
+            log.debug("Monitoring loop already online, ignoring 'on_ready' event")
+            return
+        self._monitor_loop.start()
+
+    def cog_unload(self) -> None:
+        self._monitor_loop.cancel()
+
+    @tasks.loop(seconds=_POLL_INTERVAL)
+    async def _monitor_loop(self) -> None:
+        try:
+            self._monitored_servers = monitor_config.load_config(
+                monitor_config.SERVERS_FILE
+            )
+        except monitor_config.MonitorConfigError as e:
+            log.error(f"Failed to load config for server monitoring: {e}")
+
+        queries = [
+            asyncio.to_thread(self._query_server, server.host, server.port)
+            for server in self._monitored_servers
+        ]
+        results = await asyncio.gather(*queries)
+
+        for server, status in zip(self._monitored_servers, results, strict=False):
+            log.info("%s:%d -> %s", server.host, server.port, status)
+
+    @_monitor_loop.before_loop
+    async def before_monitor(self) -> None:
+        log.info("Waiting for the bot to be online to start server monitoring...")
+        await self.bot.wait_until_ready()
 
     # returns the time remaining until the user can use the command again,
     # or 'None' if they aren't currently rate limited
@@ -152,6 +194,19 @@ class ServerMonitor(discord.Cog):
                     )
 
         return embed
+
+    def _query_server(self, host: str, port: int) -> etquery.Status:
+        try:
+            payload = etquery.query_status(host, port)
+            status = etquery.parse_status(payload, host, port)
+        except etquery.QueryError as e:
+            log.warning(f"Query failed: {e}")
+            return etquery.Status.offline(host, port)
+
+        status.location = geoip.country_lookup(host)
+
+        log.info(f"Received status from server {host}:{port}")
+        return status
 
     @discord.slash_command(name="serverstatus", description="Get status from a server")
     async def getstatus(

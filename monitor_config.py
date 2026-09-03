@@ -11,7 +11,7 @@ from etquery import DEFAULT_PORT
 
 log = logging.getLogger("server_monitor")
 
-_SERVERS_FILE = Path(__file__).parent / "config" / "servers.json"
+SERVERS_FILE = Path(__file__).parent / "config" / "servers.json"
 
 
 @dataclass
@@ -29,10 +29,10 @@ class MonitorConfigError(Exception):
 
 
 def main() -> None:
-    print(f"Reading server monitor config {_SERVERS_FILE}\n")
+    print(f"Reading server monitor config {SERVERS_FILE}\n")
 
     try:
-        servers = load_config(_SERVERS_FILE)
+        servers = load_config(SERVERS_FILE)
     except MonitorConfigError as e:
         print(f"Failed to load config: {e}")
         sys.exit(1)
