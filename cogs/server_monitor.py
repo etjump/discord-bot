@@ -151,8 +151,9 @@ class ServerMonitor(discord.Cog):
                     self._validate_cached_data(server, status, message)
                     updated += 1
 
-                # pace the edits 1s apart for each server, so we don't hit API limits
-                await asyncio.sleep(1.0)
+                # pace the edits 2s apart for each server,
+                # so we are less likely to hit API limits
+                await asyncio.sleep(2.0)
 
             log.info(f"Updated {updated}/{attempted} status messages")
 
