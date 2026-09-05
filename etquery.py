@@ -16,6 +16,7 @@ class Status:
     players: list[tuple[int, int, str]]
     location: str | None = None
     is_online: bool = True
+    name: str | None = None  # 'sv_hostname', cached on query
 
     @classmethod
     def offline(cls, host: str, port: int) -> Self:
