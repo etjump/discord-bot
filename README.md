@@ -42,10 +42,12 @@ is in `servers.json.example`). Each entry:
 
 ```json
 {
-  "host": "et.etjump.com",
+  "name": "",
+  "host": "1.1.1.1",
   "port": 27960,
   "guild_id": 123456789012345678,
-  "channel_id": 123456789012345678
+  "channel_id": 123456789012345678,
+  "message_id": null
 }
 ```
 
@@ -69,6 +71,8 @@ no commands yet to configure the server monitoring via Discord.
   state, keeping the last cached server name.
 - If a status message is deleted, the bot re-creates it.
 - Poll interval is `POLL_INTERVAL_SECONDS` in `.env` (default 60, minimum 15).
+- Status message edits are stepped to avoid running into Discord API limits,
+  configurable via `EDIT_STEP_SECONDS` in `.env` (default 2.0, minimum 1.0).
 
 ## Logging
 
