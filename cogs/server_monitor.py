@@ -20,6 +20,10 @@ _POLL_INTERVAL_MIN = 15
 _POLL_INTERVAL = max(
     int(os.environ.get("POLL_INTERVAL_SECONDS", 60)), _POLL_INTERVAL_MIN
 )
+
+_EDIT_STEP_MIN = 1.0
+_EDIT_STEP = max(float(os.environ.get("EDIT_STEP_SECONDS", 2.0)), _EDIT_STEP_MIN)
+
 _RATE_LIMIT_SECONDS = 5
 _COLOR_STRING = re.compile(r"\^[^^]")
 
@@ -123,7 +127,9 @@ class ServerMonitor(discord.Cog):
             updated = 0
             attempted = 0
 
-            for server, status in zip(self._monitored_servers, results, strict=False):
+            for i, (server, status) in enumerate(
+                zip(self._monitored_servers, results, strict=False)
+            ):
                 channel = self.bot.get_channel(server.channel_id)
                 if not isinstance(channel, discord.TextChannel):
                     log.warning(
@@ -138,6 +144,10 @@ class ServerMonitor(discord.Cog):
                     icon_url=self.bot.user.display_avatar.url,
                 )
 
+                # pace the edits for each server, so we are less likely to hit API limits
+                if i > 0:
+                    await asyncio.sleep(_EDIT_STEP)
+
                 attempted += 1
 
                 if server.message_id:
@@ -150,10 +160,6 @@ class ServerMonitor(discord.Cog):
                 if message:
                     self._validate_cached_data(server, status, message)
                     updated += 1
-
-                # pace the edits 2s apart for each server,
-                # so we are less likely to hit API limits
-                await asyncio.sleep(2.0)
 
             log.info(f"Updated {updated}/{attempted} status messages")
 
