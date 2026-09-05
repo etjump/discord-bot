@@ -1,0 +1,16 @@
+# Example server monitor config file
+# Copy this over to config/servers.json (and remove all the comments)
+# The order in which servers are defined here is the order in which the bot posts them
+# THIS FILE WILL NOT BE IMMUTABLE - the monitor will write data to this (name & message_id)
+{
+  "servers": [
+    {
+      "name": "",						# automatically filled, cached and saved from 'sv_hostname' upon query
+      "host": "",						# required, ip/domain of the server
+      "port": null,					# optional, defaults to 27960
+      "guild_id": null,			# required, Discord server ID
+      "channel_id": null,		# required, Discord channel ID
+      "message_id": null		# automatically filled, the message ID of this server on Discord
+    }
+  ]
+}

@@ -11,6 +11,7 @@ The bot has several built-in commands, some of which are available only to users
 * `/help` lists the commands available. This is permission-aware, only commands you have access to will be displayed.
   * Note: any guild-specific command overrides are ignored in the output.
 * `/ping` checks if the bot is responding. If alive, responds and prints the latency.
+* `/serverstatus <addr>` queries an ET server's current status (hostname, map, players, location). Rate-limited to one query per user per 5 seconds.
 
 ### Admin commands
 
@@ -28,6 +29,46 @@ Default commands:
 | -------- | ------------------------- |
 | `/hello` | `Hello!`                  |
 | `/info`  | `Info placeholder.`       |
+
+## Server monitoring
+
+The bot polls a configured list of ET servers and keeps a live status message
+for each of them in its configured Discord channel, updating it on every poll.
+
+### Config
+
+Monitored servers are defined in `config/servers.json` (gitignored; a template
+is in `servers.json.example`). Each entry:
+
+```json
+{
+  "host": "et.etjump.com",
+  "port": 27960,
+  "guild_id": 123456789012345678,
+  "channel_id": 123456789012345678
+}
+```
+
+- `host` - server address (IP or domain); `port` defaults to 27960 if omitted.
+- `guild_id`, `channel_id` - where the status message is posted.
+- `message_id`, `name` - managed by the bot, don't set them by hand.
+- The order of entries is the order of the messages in the channel.
+
+To add or remove a monitored server, edit `config/servers.json` — it is re-read
+on every poll, so a running bot picks up the change on the next tick. There are
+no commands yet to configure the server monitoring via Discord.
+
+### Behavior
+
+- The bot **writes back** to `config/servers.json` (unlike `commands.json`,
+  which is read-only): it stores each message's ID and the server name cached
+  from its last successful query.
+- An entry without a `message_id` gets its status message created on the first
+  poll.
+- If a server stops responding, its message stays in place and shows an offline
+  state, keeping the last cached server name.
+- If a status message is deleted, the bot re-creates it.
+- Poll interval is `POLL_INTERVAL_SECONDS` in `.env` (default 60, minimum 15).
 
 ## Logging
 
@@ -70,7 +111,7 @@ When deployed, the file layout is as follows:
 | ---- | ------- |
 | `/opt/etjump-discord-bot` | build source (git checkout) |
 | `/etc/etjump-discord-bot` | `.env` + `docker-compose.yml` |
-| `/var/lib/etjump-discord-bot/config` | live command definitions (`commands.json`) |
+| `/var/lib/etjump-discord-bot/config` | live configs: `commands.json` (commands), `servers.json` (server monitoring) |
 
 The docker-compose paths default to this - you may override them via `BOT_SRC` / `BOT_ETC` / `BOT_DATA` (used automatically by `deploy.sh`).
 
@@ -89,12 +130,15 @@ would appear on the dev bot.
    source .venv/bin/activate
    pip install -r requirements.txt
    cp .env.example .env          # set TOKEN to the test bot's token
-   mkdir -p config && cp commands.json config/commands.json
+   mkdir -p config
+   cp commands.json config/commands.json
+   cp servers.json.example config/servers.json
    ```
 
    `config/commands.json` (gitignored) is the live config the bot reads at startup and via `/reload`;
    `commands.json` is the committed fallback/template. Edit the `config/` copy for local experiments,
-   never the committed file.
+   never the committed file. `config/servers.json` (the monitor config) works the same way - populate it
+   with a server and channel to see the monitoring messages on your test bot.
 4. Run it — no Docker needed:
 
    ```
@@ -108,13 +152,14 @@ would appear on the dev bot.
 
 Formatting and linting use [Ruff](https://docs.astral.sh/ruff/) (configured in
 `pyproject.toml`); type-checking uses pyright (configured in
-`pyrightconfig.json`).
+`pyrightconfig.json`); tests use pytest.
 
 ```
-pip install -r requirements.txt ruff
+pip install -r requirements.txt -r requirements-dev.txt
 ruff format .          # format code
 ruff check .           # lint
 pyright .              # type check
+pytest                 # run tests
 ```
 
 ## Deploy
@@ -146,12 +191,18 @@ The container has `restart: unless-stopped`, so it comes back up on server reboo
 
 ## Structure
 
-- `bot.py` — entrypoint; sets up logging, registers config commands, loads the cog, runs the bot
-- `cogs/basic.py` — built-in commands (`/ping`, `/reload`, `/setstatus`) and event listeners
-- `config.py` — reads environment variables; resolves the commands file path
+- `bot.py` — entrypoint; sets up logging, registers config commands, loads the cogs, runs the bot
+- `cogs/basic.py` — built-in commands (`/help`, `/ping`, `/reload`, `/setstatus`) and event listeners
+- `cogs/server_monitor.py` — the server monitoring loop and `/serverstatus`
+- `config.py` — reads environment variables; resolves the config file paths
 - `dynamic_commands.py` — loads the commands config and registers/reloads commands
+- `etquery.py` — ET getstatus protocol query and parsing
+- `geoip.py` — server country lookup (ipinfo.io)
+- `monitor_config.py` — loads/saves the monitored-servers config
 - `commands.json` — committed default command definitions (template)
+- `servers.json.example` — monitored-servers config template
 - `docker-compose.yml` — service definition with the standard layout paths
+- `requirements-dev.txt` — development tooling (pytest, ruff, pyright)
 
 Commands that need logic live in a cog under `cogs/` (like `cogs/basic.py`);
 simple static commands go in the command config. Settings live in `config.py` and `.env`.
